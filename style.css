@@ -1,0 +1,53 @@
+:root{--accent:#3275d5;--line:#cedaeb;--ink:#203551;background:#dcecff;color:#203551;font-family:ui-sans-serif,-apple-system,"Noto Sans KR",sans-serif}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}
+button{font:inherit;cursor:pointer}
+.game{height:100svh;min-height:400px;position:relative}
+#stage{position:absolute;inset:0 0 100px}
+canvas{width:100%;height:100%;display:block}
+.hud{position:absolute;top:16px;right:16px;width:300px;max-width:calc(100% - 24px);max-height:calc(100svh - 120px);overflow:auto;z-index:5;padding:14px;background:#f7faffe6;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 30px #193c6515}
+.topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+.brand-home{font-weight:800;text-decoration:none;color:inherit;font-size:13px}
+.tools{display:flex;gap:4px}
+.icon-button{border:1px solid #cbd8eb;background:transparent;padding:6px 8px;border-radius:8px}
+.icon-only{width:30px;height:30px;border:1px solid #cbd8eb;border-radius:7px;background:transparent}
+.scoreboard{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:11px}
+.score{border:1px solid #cad9ee;border-radius:10px;padding:7px;background:#fff}
+.score-head{font-size:10px;font-weight:700;display:flex;gap:5px;align-items:center}
+.score-dot{width:7px;height:7px;border-radius:50%;background:var(--color)}
+.life-count{font-size:20px;font-weight:800}
+.hud-utilities{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.projection-switch{display:inline-flex;gap:2px;border:1px solid #c9d9ef;border-radius:9px;padding:2px;background:#f6faff}
+.projection-switch button{border:0;background:transparent;padding:6px 9px;border-radius:6px;font-size:11px}
+.projection-switch button[aria-pressed=true]{background:#306ac0;color:#fff}
+.subtle-button{background:transparent;border:0;color:#4d6c96;font-size:11px}
+.credits{font-size:9px;color:#6d82a0}
+.start-card{padding-top:8px}
+.start-card h2{font-size:16px;margin:0 0 10px}
+.vehicle-selection{display:grid;gap:6px;margin-bottom:10px}
+.aircraft-current{display:flex;gap:8px;align-items:center;border:1px solid #cddcf1;border-radius:9px;padding:8px;background:#edf4ff;font-size:11px}
+.player-mode{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px}
+.player-mode button{border:1px solid #c4d7ef;border-radius:7px;padding:8px;background:transparent}
+.player-mode button[aria-pressed=true]{background:#dbeaff;font-weight:800}
+.primary{width:100%;display:flex;justify-content:space-between;border:0;border-radius:10px;background:#2f65b3;color:#fff;padding:12px 14px;font-weight:700}
+.btn-pulse{box-shadow:0 0 0 0 rgba(250,204,21,.6);animation:pulse 1.5s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 12px rgba(250,204,21,0)}100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}}
+@media(prefers-reduced-motion:reduce){.btn-pulse{animation:none}}
+.round-controls{display:flex;gap:6px;border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.round-controls button{flex:1}
+.round-controls span{width:100%;font-size:9px;text-align:right}
+.controls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:min(640px,calc(100% - 32px));z-index:6}
+.player-controls{display:grid;grid-template-columns:repeat(var(--players,1),1fr);gap:10px}
+.flap-button{height:72px;border-radius:16px;border:1px solid #fff3;background:var(--player-color,#3275d5);color:#fff;font-size:18px;font-weight:800;box-shadow:0 4px 0 #21456b}
+.flap-button.pressed{transform:translateY(3px)}
+.flap-button small{display:block;font-size:10px}
+.countdown{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:30}
+.countdown span{font-size:min(40vw,260px);font-weight:900;color:#fff;text-shadow:0 3px 20px #0008}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#203551;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.3s;z-index:40}
+.toast.show{opacity:1}
+.settings{position:fixed;right:16px;top:70px;width:290px;background:#f8fbff;border:1px solid #c5d7ef;border-radius:14px;padding:18px;z-index:20}
+.settings-header{display:flex;justify-content:space-between;margin-bottom:14px}
+.range-label{display:block;font-size:12px;margin-bottom:16px}
+.range-label output{float:right}
+.range-label input{width:100%}
+.check-label{display:flex;justify-content:space-between;margin:14px 0;font-size:12px}
+@media(max-width:640px){.hud{width:250px;padding:10px}}

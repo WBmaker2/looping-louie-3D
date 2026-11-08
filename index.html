@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>루핑루이 3D</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐔</text></svg>">
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<main class="game">
+<div id="stage"><canvas id="canvas" tabindex="0" aria-label="루핑루이 게임판"></canvas></div>
+
+<section class="hud" aria-label="게임 조작">
+  <header class="topbar">
+    <a class="brand-home" href="./">LOOPING LOUIE 3D</a>
+    <div class="tools">
+      <div class="projection-switch" role="group" aria-label="낮 밤 눈">
+        <button class="icon-only" data-theme-choice="light" aria-pressed="true">☀️</button>
+        <button class="icon-only" data-theme-choice="dark" aria-pressed="false">🌙</button>
+        <button class="icon-only" data-theme-choice="snow" aria-pressed="false">❄️</button>
+      </div>
+      <button id="sound" class="icon-button" aria-pressed="true">🔊</button>
+      <button id="settings-toggle" class="icon-button" aria-expanded="false">⚙️</button>
+    </div>
+  </header>
+
+  <div class="scoreboard" id="scoreboard"></div>
+
+  <div class="hud-utilities">
+    <div class="projection-switch" role="group" aria-label="카메라">
+      <button id="camera-ortho" aria-pressed="false">직교</button>
+      <button id="camera-persp" aria-pressed="true">원근</button>
+      <button id="camera-follow" aria-pressed="false">추적</button>
+    </div>
+    <div class="game-time">⏱ <output id="elapsed-time">00:00</output></div>
+  </div>
+
+  <div class="view-tools">
+    <button id="view-reset" class="subtle-button">시점 초기화 ↺</button>
+    <span class="credits">닭·농부·농장: Quaternius CC0 (Poly Pizza)</span>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="start-card">
+      <h2 id="overlay-title" hidden></h2>
+      <div class="vehicle-selection">
+        <div class="aircraft-current"><span class="plane-emoji">✈️</span><strong>귀여운 빨간 비행기</strong></div>
+        <div class="aircraft-current"><span class="plane-emoji">👨‍🌾</span><strong>농부 조종사</strong></div>
+      </div>
+      <div id="player-mode" class="player-mode" role="group" aria-label="플레이어 수">
+        <button data-player-count="1" aria-pressed="true">1인</button>
+        <button data-player-count="2" aria-pressed="false">2인</button>
+        <button data-player-count="3" aria-pressed="false">3인</button>
+      </div>
+      <button id="start" class="primary btn-pulse">게임 시작 <span>↗</span></button>
+    </div>
+  </div>
+
+  <div class="round-controls">
+    <button id="pause" class="icon-button" disabled>일시정지</button>
+    <button id="restart" class="icon-button">다시 시작 ↺</button>
+    <span id="save-count"></span>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+  <div id="error" class="error" hidden role="alert"></div>
+</section>
+
+<div id="countdown" class="countdown" hidden><span id="countdown-number">3</span></div>
+
+<footer class="controls"><div id="player-controls" class="player-controls" data-count="1"></div></footer>
+
+<aside id="settings" class="settings" hidden>
+  <div class="settings-header"><h2>게임 설정</h2><button id="settings-close" class="subtle-button">✕</button></div>
+  <label class="range-label">회전 속도 <output id="speed-out">1.0×</output><input id="speed" type="range" min="0.55" max="1.5" step="0.05" value="1"></label>
+  <label class="range-label">누름판 힘 <output id="force-out">1.0×</output><input id="force" type="range" min="0.65" max="1.45" step="0.05" value="1"></label>
+  <label class="range-label">중력 <output id="gravity-out">1.0×</output><input id="gravity" type="range" min="0.55" max="1.5" step="0.05" value="1"></label>
+  <label class="check-label"><span>AI 플레이</span><input id="ai" type="checkbox" checked></label>
+  <label class="check-label"><span>연습 모드</span><input id="practice" type="checkbox"></label>
+</aside>
+</main>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+const MODES={1:[{player:0,code:'Space',keyLabel:'Space',label:'P1'}],2:[{player:3,code:'ShiftLeft',keyLabel:'왼쪽 Shift',label:'P1'},{player:1,code:'ShiftRight',keyLabel:'오른쪽 Shift',label:'P2'}],3:[{player:3,code:'ShiftLeft',keyLabel:'왼쪽 Shift',label:'P1'},{player:0,code:'Space',keyLabel:'Space',label:'P2'},{player:1,code:'ShiftRight',keyLabel:'오른쪽 Shift',label:'P3'}]};
+export function playerBindings(c){return(MODES[c]??MODES[1]).map(b=>({...b}))}
+export function playerName(id,bindings){const h=bindings.find(b=>b.player===id);if(h)return h.label;const bots=[0,1,2,3].filter(p=>!bindings.some(b=>b.player===p));return `AI ${bots.indexOf(id)+1}`}
+export function elapsedTime(t){const s=Math.max(0,Math.floor(t)),m=Math.floor(s/60),h=Math.floor(m/60),two=n=>String(n).padStart(2,'0');return h?`${h}:${two(m%60)}:${two(s%60)}`:`${two(m)}:${two(s)}`}
