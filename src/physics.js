@@ -1,11 +1,12 @@
 // Renderer-independent simulation adapted from reference site.
 export const TAU=Math.PI*2;
 export const STEP=1/120;
-export const CONFIG=Object.freeze({armLength:4.4,pivotHeight:1.9,restAngle:-0.17,planeRadius:0.22,paddlePivotRadius:5.55,paddleLength:1.22,paddlePivotHeight:0.63,paddleThickness:0.08,paddleOffset:-0.16,tokenOffset:0.28,tokenRadius:4.34,tokenBottom:0.74,tokenTop:1.34,orbitSpeed:0.82,gravity:9.81,damping:0.32,spring:100,paddleDamping:9.5,paddleKick:8.5,cooldown:0.34,restitution:0.65});
+export const CONFIG=Object.freeze({armLength:4.4,pivotHeight:1.9,restAngle:-0.17,planeRadius:0.22,paddlePivotRadius:5.55,paddleLength:1.22,paddlePivotHeight:0.63,paddleThickness:0.08,paddleOffset:-0.16,tokenOffset:0.28,tokenRadius:4.34,tokenCenterY:0.78,tokenBottom:0.46,tokenTop:1.34,orbitSpeed:0.82,gravity:9.81,damping:0.32,spring:100,paddleDamping:9.5,paddleKick:8.5,cooldown:0.34,restitution:0.65});
 export const wrap=a=>((a+Math.PI)%TAU+TAU)%TAU-Math.PI;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-function tokenPosition(pAngle,token,c){const a=pAngle+c.tokenOffset;return{x:c.tokenRadius*Math.sin(a)+(token-1)*0.35*Math.cos(a),y:1.04,z:c.tokenRadius*Math.cos(a)-(token-1)*0.35*Math.sin(a)}}
-function touches(plane,chicken){const dx=plane.x-chicken.x,dy=plane.y-chicken.y,dz=plane.z-chicken.z;return dx*dx+dy*dy*dz||dx*dx+dz*dz<0.45*0.45&&Math.abs(dy)<0.45}
+function tokenPosition(pAngle,token,c){const a=pAngle+c.tokenOffset;return{x:c.tokenRadius*Math.sin(a)+(token-1)*0.38*Math.cos(a),y:c.tokenCenterY,z:c.tokenRadius*Math.cos(a)-(token-1)*0.38*Math.sin(a)}}
+export const MIN_PLANE_Y=0.85; // bottom of the plane mesh above the board — never underground
+function touches(plane,chicken){const dx=plane.x-chicken.x,dy=plane.y-chicken.y,dz=plane.z-chicken.z;const horizontal=dx*dx+dz*dz;return horizontal<0.55*0.55&&Math.abs(dy)<0.55}
 export class Simulation{
  constructor(){this.settings={speed:1,force:1,gravity:1,ai:true,practice:false,humanPlayers:[0]};this.reset()}
  reset({seed=982451653,startAngle=-1.45}={}){this.time=0;this.accumulator=0;this.status='ready';this.roundSeed=seed>>>0;this.roundStartAngle=startAngle;this.theta=startAngle;this.phi=0.22;this.omega=0;this.events=[];this.totalHits=0;this.totalLosses=0;this.spin=0;this.spinVelocity=0;this.winner=null;this.rng=this.roundSeed;this.players=Array.from({length:4},(_,i)=>({id:i,angle:i*Math.PI/2,lives:3,tokens:[true,true,true],saves:0,paddle:0,velocity:0,cooldown:0,used:false,lastTokenPass:-999,aiPass:-999,aiTarget:null}))}
@@ -17,6 +18,10 @@ export class Simulation{
  planePosition(){const r=CONFIG.armLength*Math.cos(this.phi);return{x:r*Math.sin(this.theta),y:CONFIG.pivotHeight+CONFIG.armLength*Math.sin(this.phi),z:r*Math.cos(this.theta),radius:r}}
  paddlePosition(p){const ang=p.angle+CONFIG.paddleOffset;const rad=CONFIG.paddlePivotRadius-CONFIG.paddleLength*Math.cos(p.paddle);return{x:rad*Math.sin(ang),y:CONFIG.paddlePivotHeight+CONFIG.paddleLength*Math.sin(p.paddle),z:rad*Math.cos(ang),radius:rad,angle:ang}}
  step(dt){const c=CONFIG;this.time+=dt;this.theta+=c.orbitSpeed*this.settings.speed*dt;this.omega+=(-c.gravity*this.settings.gravity/c.armLength*Math.cos(this.phi)-c.damping*this.omega)*dt;this.phi+=this.omega*dt;if(this.phi>1.35){this.phi=1.35;this.omega=-Math.abs(this.omega)*0.2}if(this.phi<c.restAngle){this.phi=c.restAngle;this.omega=this.omega<-0.3?-this.omega*0.08:0}
+  // Hard floor guard — plane mesh bottom never enters the board/ground
+  const minPhi=Math.asin(clamp((MIN_PLANE_Y+c.planeRadius-c.pivotHeight)/c.armLength,-1,1));
+  if(this.phi<minPhi){this.phi=minPhi;this.omega=Math.abs(this.omega)*0.15}
+  if(this.planePosition().y<MIN_PLANE_Y+c.planeRadius){this.phi=minPhi}
   this.updateAI();for(const p of this.players){p.cooldown=Math.max(0,p.cooldown-dt);p.velocity+=(-c.spring*p.paddle-c.paddleDamping*p.velocity)*dt;p.paddle+=p.velocity*dt;p.paddle=clamp(p.paddle,0,0.85);if(p.paddle===0)p.velocity=0;this.collidePaddle(p);this.collideChickens(p)}
   if(!this.settings.practice){const alive=this.players.filter(p=>p.lives>0);if(alive.length<=1){this.status='finished';this.winner=alive[0]?.id??null;this.events.push({type:'finish',winner:this.winner})}}}
  collideChickens(p){const ang=p.angle+CONFIG.tokenOffset;const pass=Math.floor((this.theta-ang+Math.PI)/TAU);if(!p.lives||Math.abs(wrap(this.theta-ang))>0.55)return;if(p.lastTokenPass===pass)return;const plane=this.planePosition();for(let t=0;t<3;t++){if(!p.tokens[t])continue;const ch=tokenPosition(p.angle,t,CONFIG);if(!touches(plane,ch))continue;p.lastTokenPass=pass;if(!this.settings.practice){p.tokens[t]=false;p.lives--}this.totalLosses++;this.omega=Math.max(this.omega,2.35);this.events.push({type:'loss',player:p.id,token:t,practice:this.settings.practice});break}}

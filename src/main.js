@@ -11,7 +11,7 @@ const COLORS=['#ef4444','#3b82f6','#22c55e','#f59e0b'];
 const canvas=$('canvas');
 
 let renderer, scene, cameraPersp, cameraOrtho, controllers, view=null;
-let boardGroup, armGroup, planeGroup, paddleMeshes=[], chickenMeshes=[];
+let boardGroup, armGroup, pitchGroup, planeGroup, paddleMeshes=[], chickenMeshes=[];
 let sim=new Simulation();
 let prevAngle=null;
 function resetRound(){const s=createRoundState(prevAngle);prevAngle=s.startAngle;sim.reset(s)}
@@ -139,14 +139,17 @@ function initScene(){
   // pivot
   boardGroup.add(mesh(new THREE.CylinderGeometry(0.45,0.55,1.9,20),mat(0x8b4513),0,1.3,0));
   boardGroup.add(mesh(new THREE.ConeGeometry(0.65,0.7,20),mat(0xffcc00),0,2.6,0));
-  // arm
+  // arm: nested yaw → pitch so height never depends on orbit angle
   armGroup=new THREE.Group();armGroup.position.set(0,CONFIG.pivotHeight,0);scene.add(armGroup);
-  const armMesh=mesh(new THREE.BoxGeometry(0.22,0.22,CONFIG.armLength),mat(0xa16207),0,0,CONFIG.armLength/2);armGroup.add(armMesh);
-  planeGroup=makePlane();planeGroup.position.set(0,0,CONFIG.armLength);armGroup.add(planeGroup);
+  pitchGroup=new THREE.Group();armGroup.add(pitchGroup);
+  const armMesh=mesh(new THREE.BoxGeometry(0.22,0.22,CONFIG.armLength),mat(0xa16207),0,0,CONFIG.armLength/2);pitchGroup.add(armMesh);
+  planeGroup=makePlane();planeGroup.position.set(0,0,CONFIG.armLength);pitchGroup.add(planeGroup);
+  // safety: keep the plane mesh bottom above the board even at low rest angles
+  planeGroup.position.y=0.12; // lift mesh ~1cm above the arm line so propellers/wheels clear the board
   // spoon paddles (스푼처럼 기울어지는 실제 보드게임 지렛대)
   for(let i=0;i<4;i++){const sp=makeSpoonPaddle(COLORS[i]);scene.add(sp);paddleMeshes.push(sp)}
-  // chickens clusters
-  for(let i=0;i<4;i++){const ang=i*Math.PI/2;for(let t=0;t<3;t++){const ch=makeChicken(t===1?0xffedb8:0xffffff);const off=(t-1)*0.38;ch.position.set((CONFIG.tokenRadius)*Math.sin(ang)+off*Math.cos(ang),0.35,(CONFIG.tokenRadius)*Math.cos(ang)-off*Math.sin(ang));ch.rotation.y=ang;scene.add(ch);chickenMeshes.push({g:ch,player:i,token:t})}}
+  // chickens clusters — feet on the board top (0.46) so visual ↔ physics heights match
+  for(let i=0;i<4;i++){const ang=i*Math.PI/2;for(let t=0;t<3;t++){const ch=makeChicken(t===1?0xffedb8:0xffffff);const off=(t-1)*0.38;ch.position.set((CONFIG.tokenRadius)*Math.sin(ang)+off*Math.cos(ang),0.46,(CONFIG.tokenRadius)*Math.cos(ang)-off*Math.sin(ang));ch.rotation.y=ang;scene.add(ch);chickenMeshes.push({g:ch,player:i,token:t})}}
   // farm decor: detailed fence, hay, flowers, extra barn props
   const barn=makeBarn();barn.position.set(0,0,7.5);barn.rotation.y=Math.PI;scene.add(barn);
   const t1=makeTree();t1.position.set(-7,0,6);scene.add(t1);
@@ -166,9 +169,12 @@ let camera=cameraPersp, follow=false;
 function resize(){const w=canvas.clientWidth||innerWidth,h=canvas.clientHeight||innerHeight;renderer.setSize(w,h,false);cameraPersp.aspect=w/h;cameraPersp.updateProjectionMatrix();const s=Math.max(w,h)/180;cameraOrtho.left=-13*s;cameraOrtho.right=13*s;cameraOrtho.top=13*s;cameraOrtho.bottom=-13*s;cameraOrtho.updateProjectionMatrix()}
 function syncCameraUI(mode){$('camera-ortho').setAttribute('aria-pressed',String(!follow&&mode==='ortho'));$('camera-persp').setAttribute('aria-pressed',String(!follow&&mode==='persp'));$('camera-follow').setAttribute('aria-pressed',String(follow))}
 function updateVisuals(s,dt){
-  // arm rotation: theta around Y, phi elevation
+  // arm: yaw on the outer group, pitch on the inner group (height independent of yaw)
   armGroup.rotation.y=s.theta;
-  armGroup.rotation.x=-s.phi; // hinge
+  pitchGroup.rotation.x=-s.phi; // hinge
+  // absolute floor guard (visual match to physics MIN_PLANE_Y)
+  const pp0=sim.planePosition();
+  if(pp0.y<1.07){pitchGroup.rotation.x=-Math.asin(Math.max(-1,Math.min(1,(1.07-CONFIG.pivotHeight)/CONFIG.armLength)))}
   if(planeGroup?.userData.prop)planeGroup.userData.prop.rotation.x+=dt*18;
   // spoon paddles: hinge at outer edge, inner spoon tip rises (pressed outer goes down)
   sim.players.forEach((p,i)=>{
