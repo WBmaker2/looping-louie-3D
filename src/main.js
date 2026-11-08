@@ -119,9 +119,9 @@ function initScene(){
   renderer=new THREE.WebGLRenderer({canvas,antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
-  scene=new THREE.Scene();scene.background=new THREE.Color(0x87ceeb);scene.fog=new THREE.Fog(0x87ceeb,22,42);
-  // Top-down perspective (시작 화면: 위에서 아래로 원근)
-  cameraPersp=new THREE.PerspectiveCamera(36,1,0.1,140);cameraPersp.position.set(0,-3.5,22);
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x87ceeb);scene.fog=new THREE.Fog(0x87ceeb,30,60);
+  // Start view matching the screenshot: south elevated perspective (~32°)
+  cameraPersp=new THREE.PerspectiveCamera(40,1,0.1,140);cameraPersp.position.set(0,9,15);
   cameraOrtho=new THREE.OrthographicCamera(-7,7,7,-7,0.1,100);cameraOrtho.position.set(0,-0.1,14);cameraOrtho.up.set(0,1,0);cameraOrtho.lookAt(0,0,0);
   camera=cameraPersp;
   const sun=new THREE.DirectionalLight(0xfff6d6,1.5);sun.position.set(6,12,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;scene.add(sun);
@@ -161,9 +161,9 @@ function initScene(){
   const hay1=mesh(new THREE.CylinderGeometry(0.45,0.45,0.9,18),mat(0xf5c542,0.85),-5.5,0.45,-5.5);hay1.rotation.z=Math.PI/2;scene.add(hay1);
   const hay2=hay1.clone();hay2.position.set(5.5,0.45,-5.5);scene.add(hay2);
   for(let i=0;i<8;i++){const f=mesh(new THREE.SphereGeometry(0.14,10,8),mat(i%2?0xffffff:0xf472b6,0.6),-6+i*1.7,0.16,-6.8);scene.add(f)}
-  controllers=new OrbitControls(cameraPersp,canvas);controllers.enableDamping=true;controllers.target.set(0,0.4,0);controllers.maxPolarAngle=Math.PI*0.45;
+  controllers=new OrbitControls(cameraPersp,canvas);controllers.enableDamping=true;controllers.target.set(0,0.6,0);controllers.maxPolarAngle=Math.PI*0.45;
   resize();window.addEventListener('resize',resize);
-  view={setProjection(m){},resetView(){cameraPersp.position.set(0,-3.5,22);cameraOrtho.position.set(0,-0.1,14);controllers.target.set(0,0.4,0);controllers.update()},update(s,dt){updateVisuals(s,dt)}};
+  view={setProjection(m){},resetView(){cameraPersp.position.set(0,9,15);cameraOrtho.position.set(0,-0.1,14);controllers.target.set(0,0.6,0);controllers.update()},update(s,dt){updateVisuals(s,dt)}};
   syncCameraUI('persp');
 }
 let camera=cameraPersp, follow=false;
@@ -211,13 +211,14 @@ function syncUI(){
   $('elapsed-time').textContent=elapsedTime(sim.time);
   $('scoreboard').innerHTML=sim.players.map((p,i)=>`<div class="score" style="--color:${COLORS[i]}"><div class="score-head"><span class="score-dot"></span>${playerName(i,bindings)}</div><strong class="life-count">${p.lives}</strong> 마리</div>`).join('');
   $('save-count').textContent=bindings.map(b=>`${b.label} 방어 ${sim.players[b.player].saves}`).join(' · ');
-  $('pause').disabled=sim.status==='ready'||sim.status==='finished';$('pause').textContent=sim.status==='paused'?'계속하기':'일시정지';
+  const canPause=sim.status==='playing'||sim.status==='paused'||countdownEnd!==null;
+  $('pause').disabled=!canPause;$('pause').textContent=sim.status==='paused'?'계속하기':'일시정지';
   for(const b of $('player-controls').children){const p=sim.players[Number(b.dataset.player)];b.disabled=sim.status!=='playing'||(!p.lives&&!sim.settings.practice)}
   $('overlay').hidden=countdownEnd!==null||sim.status==='playing'||sim.status==='paused';
   $('overlay-title').hidden=sim.status==='ready';
   if(sim.status==='paused'){$('overlay-title').textContent='일시정지';$('start').innerHTML='계속하기 <span>↗</span>'}
   else if(sim.status==='finished'){$('overlay-title').textContent=sim.winner===null?'무승부':`${playerName(sim.winner,bindings)} 승리`; $('start').innerHTML=sim.winner===null?`다시 시작`:`${playerName(sim.winner,bindings)} 다시 시작 ↗`; $('overlay').hidden=false}
-  else if(sim.status==='ready')$('overlay-title').hidden=true;
+  else if(sim.status==='ready'){$('overlay-title').hidden=true;$('start').innerHTML='게임 시작 <span>↗</span>'}
 }
 
 function setPlayerCount(count){
@@ -235,8 +236,20 @@ function start(){
   else return;
   syncUI();
 }
-function pauseToggle(){if(countdownEnd){cancelCountdown();sim.pause()}else if(sim.status==='playing')sim.pause();else if(sim.status==='paused')sim.start();syncUI()}
-function reset(){cancelCountdown();resetRound();syncUI();start()}
+function pauseToggle(){
+  if(countdownEnd!==null){cancelCountdown();toast('시작이 취소됐어요');syncUI();return}
+  if(sim.status==='playing'){sim.pause();toast('일시정지했어요 ⏸')}
+  else if(sim.status==='paused'){sim.start();toast('계속해요 ▶')}
+  syncUI();
+}
+function reset(){
+  // 다시시작: 게임 진행 중에도 1인/2인/3인 선택 메뉴로 돌아가 다음 게임을 준비
+  cancelCountdown();
+  resetRound();
+  syncUI();
+  toast('메뉴로 돌아갔어요 – 인원을 고르고 시작을 눌러주세요');
+  $('start').focus({preventScroll:true});
+}
 function flap(id){if(sim.press(id)){ensureAudio();beep(660,0.08);const b=$('player-controls').querySelector(`[data-player="${id}"]`);b?.classList.add('pressed');setTimeout(()=>b?.classList.remove('pressed'),110)}}
 
 function bindInputs(){
