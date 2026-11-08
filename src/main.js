@@ -235,8 +235,8 @@ function start(){
   else return;
   syncUI();
 }
-function pauseToggle(){if(countdownEnd){countdownEnd=null;$('countdown').hidden=true;sim.pause()}else if(sim.status==='playing')sim.pause();else if(sim.status==='paused')sim.start();syncUI()}
-function reset(){countdownEnd=null;$('countdown').hidden=true;resetRound();syncUI();start()}
+function pauseToggle(){if(countdownEnd){cancelCountdown();sim.pause()}else if(sim.status==='playing')sim.pause();else if(sim.status==='paused')sim.start();syncUI()}
+function reset(){cancelCountdown();resetRound();syncUI();start()}
 function flap(id){if(sim.press(id)){ensureAudio();beep(660,0.08);const b=$('player-controls').querySelector(`[data-player="${id}"]`);b?.classList.add('pressed');setTimeout(()=>b?.classList.remove('pressed'),110)}}
 
 function bindInputs(){
@@ -259,7 +259,7 @@ function bindInputs(){
   $('settings-close').addEventListener('click',()=>$('settings').hidden=true);
   $('sound').addEventListener('click',()=>{sound=!sound;$('sound').textContent=sound?'🔊':'🔇'});
   for(const b of document.querySelectorAll('[data-theme-choice]'))b.addEventListener('click',()=>{const m=b.dataset.themeChoice;scene.background=new THREE.Color(m==='dark'?0x0d1c35:m==='snow'?0xeaf2ff:0x87ceeb);scene.fog.color.copy(scene.background);for(const x of document.querySelectorAll('[data-theme-choice]'))x.setAttribute('aria-pressed',String(x===b))});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){countdownEnd=null;$('countdown').hidden=true;sim.pause();syncUI()}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelCountdown();sim.pause();syncUI()}});
 }
 
 function openUpdateHistory(){
@@ -269,14 +269,16 @@ function openUpdateHistory(){
 }
 
 const clock={last:null,acc:0};
+function cancelCountdown(){countdownEnd=null;$('countdown').hidden=true}
 function frame(ts){
   requestAnimationFrame(frame);
   if(!clock.last)clock.last=ts;let dt=Math.min((ts-clock.last)/1000,0.1);clock.last=ts;
   if(countdownEnd!==null){
-    const sec=Math.ceil((countdownEnd-ts)/1000);
-    if(sec<=0){countdownEnd=null;$('countdown').hidden=true;sim.start();beep(880,0.3)}
-    else{$('countdown-number').textContent=sec;$('countdown').hidden=false;if(sec!==Math.ceil((countdownEnd-ts+16)/1000))beep(520,0.12)}
-  }
+    const now=performance.now();
+    const sec=Math.ceil((countdownEnd-now)/1000);
+    if(sec<=0){cancelCountdown();sim.start();beep(880,0.3)}
+    else{$('countdown-number').textContent=sec;$('countdown').hidden=false}
+  } else if(!$('countdown').hidden){$('countdown').hidden=true}
   sim.advance(dt);
   for(const ev of sim.drainEvents()){
     if(ev.type==='hit'){beep(880,0.12);toast(`${playerName(ev.player,bindings)} 방어! 🛡️`)}

@@ -1,5 +1,5 @@
 :root{--accent:#3275d5;--line:#cedaeb;--ink:#203551;background:#dcecff;color:#203551;font-family:ui-sans-serif,-apple-system,"Noto Sans KR",sans-serif}
-*{box-sizing:border-box}body{margin:0;overflow:hidden}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}[hidden]{display:none!important}
 button{font:inherit;cursor:pointer}
 .game{height:100svh;min-height:400px;position:relative}
 #stage{position:absolute;inset:0 0 100px}
