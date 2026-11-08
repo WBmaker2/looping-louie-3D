@@ -5,6 +5,7 @@ import { FrameClock } from './frame-clock.js';
 import { GameAudio } from './game-audio.js';
 import { createRoundState } from './round-state.js';
 import { playerBindings, playerName, elapsedTime } from './player-mode.js';
+import { UPDATE_HISTORY } from './update-history.js';
 
 const $=id=>document.getElementById(id);
 const COLORS=['#ef4444','#3b82f6','#22c55e','#f59e0b'];
@@ -120,7 +121,7 @@ function initScene(){
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
   scene=new THREE.Scene();scene.background=new THREE.Color(0x87ceeb);scene.fog=new THREE.Fog(0x87ceeb,22,42);
   // Top-down perspective (시작 화면: 위에서 아래로 원근)
-  cameraPersp=new THREE.PerspectiveCamera(38,1,0.1,120);cameraPersp.position.set(0,-2.8,15.5);
+  cameraPersp=new THREE.PerspectiveCamera(36,1,0.1,140);cameraPersp.position.set(0,-3.5,22);
   cameraOrtho=new THREE.OrthographicCamera(-7,7,7,-7,0.1,100);cameraOrtho.position.set(0,-0.1,14);cameraOrtho.up.set(0,1,0);cameraOrtho.lookAt(0,0,0);
   camera=cameraPersp;
   const sun=new THREE.DirectionalLight(0xfff6d6,1.5);sun.position.set(6,12,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;scene.add(sun);
@@ -162,7 +163,7 @@ function initScene(){
   for(let i=0;i<8;i++){const f=mesh(new THREE.SphereGeometry(0.14,10,8),mat(i%2?0xffffff:0xf472b6,0.6),-6+i*1.7,0.16,-6.8);scene.add(f)}
   controllers=new OrbitControls(cameraPersp,canvas);controllers.enableDamping=true;controllers.target.set(0,0.4,0);controllers.maxPolarAngle=Math.PI*0.45;
   resize();window.addEventListener('resize',resize);
-  view={setProjection(m){},resetView(){cameraPersp.position.set(0,-2.8,15.5);cameraOrtho.position.set(0,-0.1,14);controllers.target.set(0,0.4,0);controllers.update()},update(s,dt){updateVisuals(s,dt)}};
+  view={setProjection(m){},resetView(){cameraPersp.position.set(0,-3.5,22);cameraOrtho.position.set(0,-0.1,14);controllers.target.set(0,0.4,0);controllers.update()},update(s,dt){updateVisuals(s,dt)}};
   syncCameraUI('persp');
 }
 let camera=cameraPersp, follow=false;
@@ -252,11 +253,19 @@ function bindInputs(){
   for(const [id,name] of [['speed','speed'],['force','force'],['gravity','gravity']])$(id).addEventListener('input',e=>{sim.settings[name]=Number(e.target.value);$(name+'-out').textContent=Number(e.target.value).toFixed(1)+'×'});
   $('ai').addEventListener('change',e=>sim.settings.ai=e.target.checked);
   $('practice').addEventListener('change',e=>{sim.settings.practice=e.target.checked;resetRound();syncUI()});
+  $('update-history-btn').addEventListener('click',()=>openUpdateHistory());
+  $('update-history-close').addEventListener('click',()=>$('update-history-dialog').close());
   $('settings-toggle').addEventListener('click',()=>{$('settings').hidden=!$('settings').hidden});
   $('settings-close').addEventListener('click',()=>$('settings').hidden=true);
   $('sound').addEventListener('click',()=>{sound=!sound;$('sound').textContent=sound?'🔊':'🔇'});
   for(const b of document.querySelectorAll('[data-theme-choice]'))b.addEventListener('click',()=>{const m=b.dataset.themeChoice;scene.background=new THREE.Color(m==='dark'?0x0d1c35:m==='snow'?0xeaf2ff:0x87ceeb);scene.fog.color.copy(scene.background);for(const x of document.querySelectorAll('[data-theme-choice]'))x.setAttribute('aria-pressed',String(x===b))});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){countdownEnd=null;$('countdown').hidden=true;sim.pause();syncUI()}});
+}
+
+function openUpdateHistory(){
+  $('update-history-list').innerHTML=UPDATE_HISTORY.map(entry=>`<div><p class="update-date">📅 ${entry.date}</p><ul class="update-items">${entry.items.map(it=>`<li>${it}</li>`).join('')}</ul></div>`).join('');
+  $('update-history-dialog').showModal();
+  $('update-history-close').focus();
 }
 
 const clock={last:null,acc:0};
@@ -283,6 +292,6 @@ try{
   setPlayerCount(1);
   bindInputs();
   syncUI();
-  window.__louie={sim};
+  window.__louie={sim,openUpdateHistory};
   requestAnimationFrame(frame);
 }catch(e){console.error(e);$('error').hidden=false;$('error').textContent='3D 게임판을 열지 못했습니다: '+e.message}
