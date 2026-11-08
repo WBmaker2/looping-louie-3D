@@ -39,6 +39,7 @@
 
   <div class="view-tools">
     <button id="view-reset" class="subtle-button">시점 초기화 ↺</button>
+    <button id="update-history-btn" class="subtle-button">🕘 업데이트 내역</button>
     <span class="credits">닭·농부·농장: Quaternius CC0 (Poly Pizza)</span>
   </div>
 
@@ -71,7 +72,16 @@
 
 <footer class="controls"><div id="player-controls" class="player-controls" data-count="1"></div></footer>
 
-<aside id="settings" class="settings" hidden>
+  <dialog id="update-history-dialog" class="update-history-dialog" aria-labelledby="update-history-title">
+    <div class="update-history-head">
+      <h2 id="update-history-title">🕘 업데이트 내역</h2>
+      <button id="update-history-close" class="icon-button icon-only" aria-label="업데이트 내역 닫기">✕</button>
+    </div>
+    <p class="update-history-sub">처음 앱 제작(2026-11-08)부터 지금까지의 과정입니다. 최신 변경이 보이지 않으면 새로고침(⌘R / Ctrl+R) 해주세요.</p>
+    <div id="update-history-list" class="update-history-list"></div>
+  </dialog>
+
+  <aside id="settings" class="settings" hidden>
   <div class="settings-header"><h2>게임 설정</h2><button id="settings-close" class="subtle-button">✕</button></div>
   <label class="range-label">회전 속도 <output id="speed-out">1.0×</output><input id="speed" type="range" min="0.55" max="1.5" step="0.05" value="1"></label>
   <label class="range-label">누름판 힘 <output id="force-out">1.0×</output><input id="force" type="range" min="0.65" max="1.45" step="0.05" value="1"></label>
@@ -80,6 +90,6 @@
   <label class="check-label"><span>연습 모드</span><input id="practice" type="checkbox"></label>
 </aside>
 </main>
-<script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/main.js?v=20261108-2"></script>
 </body>
 </html>
