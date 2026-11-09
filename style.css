@@ -13,6 +13,30 @@ canvas{width:100%;height:100%;display:block}
 .mini-scores{display:none;font-size:11px;font-weight:700;color:var(--ink);padding:6px 2px}
 .hud-minimized .mini-scores{display:block}
 #hud-toggle{min-width:36px;text-align:center}
+.hud-minimized #sound,.hud-minimized #settings-toggle{display:none}
+@media(max-width:640px){
+  .hud-minimized{width:200px;top:8px;right:8px;padding:8px;border-radius:14px;box-shadow:0 4px 18px #193c6520}
+  .hud-minimized .topbar{gap:4px}
+  .hud-minimized .tools{gap:2px}
+  .hud-minimized .round-controls button{flex:1 1 70px;font-size:11px;padding:6px 4px}
+}
+@media(max-width:480px) and (orientation:portrait){
+  .hud-minimized{width:150px;top:6px;right:6px;padding:6px 7px;border-radius:16px}
+  .hud-minimized .brand-home{font-size:10px;line-height:1.1}
+  .hud-minimized .topbar{padding-bottom:4px;margin-bottom:4px;gap:3px}
+  .hud-minimized .tools .projection-switch{display:none}
+  .hud-minimized .hud-utilities{margin-bottom:2px}
+  .hud-minimized .game-time{font-size:12px}
+  .hud-minimized .mini-scores{display:none}
+  .hud-minimized .round-controls{margin-top:4px;padding-top:4px;gap:4px}
+  .hud-minimized .round-controls button{flex:1 1 60px;min-height:28px;padding:5px 3px;font-size:10px}
+  .hud-minimized .round-controls span{display:none}
+  .hud-minimized #hud-toggle{min-width:28px;padding:4px 6px}
+}
+@media(max-width:640px) and (orientation:portrait){
+  .hud:not(.hud-minimized){width:calc(100vw - 16px);right:8px;top:8px;max-height:52svh;padding:10px}
+  #stage{inset:0 0 120px}
+}
 .topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
 .brand-home{font-weight:800;text-decoration:none;color:inherit;font-size:13px}
 .tools{display:flex;gap:4px}
