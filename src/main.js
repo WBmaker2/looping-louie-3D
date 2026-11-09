@@ -20,6 +20,21 @@ resetRound();
 let bindings=playerBindings(1);
 const isHuman=id=>bindings.some(b=>b.player===id);
 let countdownEnd=null, sound=true;
+let hudMinimized=false, hudManuallyExpanded=false;
+function setHudMinimized(min){
+  hudMinimized=min;
+  const hud=document.querySelector('.hud');
+  hud.classList.toggle('hud-minimized',min);
+  const t=$('hud-toggle');
+  if(t){t.textContent=min?'+':'−';t.setAttribute('aria-expanded',String(!min))}
+  const mini=$('mini-scores'); if(mini) mini.hidden=!min;
+  // mini-scores visibility driven by CSS; update text in syncUI
+}
+function updateHudForStatus(){
+  const shouldMin = sim.status==='playing' && countdownEnd===null && !hudManuallyExpanded;
+  if(sim.status!=='playing'){hudManuallyExpanded=false; setHudMinimized(false);}
+  else {setHudMinimized(shouldMin)}
+}
 
 function mat(color,rough=0.8){return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:0.05})}
 function mesh(geo,material,x=0,y=0,z=0){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return m}
@@ -122,7 +137,6 @@ function initScene(){
   scene=new THREE.Scene();scene.background=new THREE.Color(0x87ceeb);scene.fog=new THREE.Fog(0x87ceeb,30,60);
   // Start view matching the screenshot: south elevated perspective (~32°)
   cameraPersp=new THREE.PerspectiveCamera(40,1,0.1,140);cameraPersp.position.set(0,9,15);
-  cameraOrtho=new THREE.OrthographicCamera(-7,7,7,-7,0.1,100);cameraOrtho.position.set(0,-0.1,14);cameraOrtho.up.set(0,1,0);cameraOrtho.lookAt(0,0,0);
   camera=cameraPersp;
   const sun=new THREE.DirectionalLight(0xfff6d6,1.5);sun.position.set(6,12,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;scene.add(sun);
   scene.add(new THREE.AmbientLight(0xffffff,0.55));
@@ -163,12 +177,10 @@ function initScene(){
   for(let i=0;i<8;i++){const f=mesh(new THREE.SphereGeometry(0.14,10,8),mat(i%2?0xffffff:0xf472b6,0.6),-6+i*1.7,0.16,-6.8);scene.add(f)}
   controllers=new OrbitControls(cameraPersp,canvas);controllers.enableDamping=true;controllers.target.set(0,0.6,0);controllers.maxPolarAngle=Math.PI*0.45;
   resize();window.addEventListener('resize',resize);
-  view={setProjection(m){},resetView(){cameraPersp.position.set(0,9,15);cameraOrtho.position.set(0,-0.1,14);controllers.target.set(0,0.6,0);controllers.update()},update(s,dt){updateVisuals(s,dt)}};
-  syncCameraUI('persp');
+  view={resetView(){cameraPersp.position.set(0,9,15);controllers.target.set(0,0.6,0);controllers.update()},update(s,dt){updateVisuals(s,dt)}};
 }
-let camera=cameraPersp, follow=false;
-function resize(){const w=canvas.clientWidth||innerWidth,h=canvas.clientHeight||innerHeight;renderer.setSize(w,h,false);cameraPersp.aspect=w/h;cameraPersp.updateProjectionMatrix();const s=Math.max(w,h)/180;cameraOrtho.left=-13*s;cameraOrtho.right=13*s;cameraOrtho.top=13*s;cameraOrtho.bottom=-13*s;cameraOrtho.updateProjectionMatrix()}
-function syncCameraUI(mode){$('camera-ortho').setAttribute('aria-pressed',String(!follow&&mode==='ortho'));$('camera-persp').setAttribute('aria-pressed',String(!follow&&mode==='persp'));$('camera-follow').setAttribute('aria-pressed',String(follow))}
+let camera=cameraPersp;
+function resize(){const w=canvas.clientWidth||innerWidth,h=canvas.clientHeight||innerHeight;renderer.setSize(w,h,false);cameraPersp.aspect=w/h;cameraPersp.updateProjectionMatrix()}
 function updateVisuals(s,dt){
   // arm: yaw on the outer group, pitch on the inner group (height independent of yaw)
   armGroup.rotation.y=s.theta;
@@ -197,8 +209,7 @@ function updateVisuals(s,dt){
   });
   // chickens visibility
   chickenMeshes.forEach(c=>{c.g.visible=sim.players[c.player].tokens[c.token]});
-  if(follow){const pp=sim.planePosition();cameraPersp.position.lerp(new THREE.Vector3(pp.x+2,-6,pp.z+6),0.08);cameraPersp.lookAt(pp.x,pp.y,pp.z)}
-  else if(camera===cameraPersp)controllers.update();
+  controllers.update();
   renderer.render(scene,camera);
 }
 
@@ -209,12 +220,14 @@ function ensureAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.we
 
 function syncUI(){
   $('elapsed-time').textContent=elapsedTime(sim.time);
+  updateHudForStatus();
   $('scoreboard').innerHTML=sim.players.map((p,i)=>`<div class="score" style="--color:${COLORS[i]}"><div class="score-head"><span class="score-dot"></span>${playerName(i,bindings)}</div><strong class="life-count">${p.lives}</strong> 마리</div>`).join('');
+  const mini=$('mini-scores'); if(mini) mini.textContent=sim.players.map(p=>`${playerName(p.id,bindings)} ${p.lives}`).join(' · ');
   $('save-count').textContent=bindings.map(b=>`${b.label} 방어 ${sim.players[b.player].saves}`).join(' · ');
   const canPause=sim.status==='playing'||sim.status==='paused'||countdownEnd!==null;
   $('pause').disabled=!canPause;$('pause').textContent=sim.status==='paused'?'계속하기':'일시정지';
   for(const b of $('player-controls').children){const p=sim.players[Number(b.dataset.player)];b.disabled=sim.status!=='playing'||(!p.lives&&!sim.settings.practice)}
-  $('overlay').hidden=countdownEnd!==null||sim.status==='playing'||sim.status==='paused';
+  $('overlay').hidden=countdownEnd!==null||sim.status==='playing';
   $('overlay-title').hidden=sim.status==='ready';
   if(sim.status==='paused'){$('overlay-title').textContent='일시정지';$('start').innerHTML='계속하기 <span>↗</span>'}
   else if(sim.status==='finished'){$('overlay-title').textContent=sim.winner===null?'무승부':`${playerName(sim.winner,bindings)} 승리`; $('start').innerHTML=sim.winner===null?`다시 시작`:`${playerName(sim.winner,bindings)} 다시 시작 ↗`; $('overlay').hidden=false}
@@ -237,9 +250,10 @@ function start(){
   syncUI();
 }
 function pauseToggle(){
-  if(countdownEnd!==null){cancelCountdown();toast('시작이 취소됐어요');syncUI();return}
+  if(countdownEnd!==null){cancelCountdown();sim.pause();toast('시작이 취소됐어요');syncUI();return}
   if(sim.status==='playing'){sim.pause();toast('일시정지했어요 ⏸')}
   else if(sim.status==='paused'){sim.start();toast('계속해요 ▶')}
+  else {syncUI();return}
   syncUI();
 }
 function reset(){
@@ -255,17 +269,19 @@ function flap(id){if(sim.press(id)){ensureAudio();beep(660,0.08);const b=$('play
 function bindInputs(){
   $('start').addEventListener('click',start);
   $('restart').addEventListener('click',reset);
-  $('pause').addEventListener('click',pauseToggle);
+  $('pause').addEventListener('pointerdown',e=>{e.preventDefault();pauseToggle()});
   $('player-controls').addEventListener('pointerdown',e=>{const b=e.target.closest('[data-player]');if(b&&!b.disabled)flap(Number(b.dataset.player))});
   for(const b of $('player-mode').querySelectorAll('button'))b.addEventListener('click',()=>setPlayerCount(b.dataset.playerCount));
   window.addEventListener('keydown',e=>{if(['INPUT','SELECT'].includes(e.target.tagName))return;const b=bindings.find(x=>x.code===e.code);if(b&&sim.status==='playing'){e.preventDefault();if(!e.repeat)flap(b.player)}else if(e.code==='KeyP')pauseToggle();else if(e.code==='KeyR')reset();});
-  $('camera-ortho').addEventListener('click',()=>{follow=false;camera=cameraOrtho;scene.remove(controllers.domElement);syncCameraUI('ortho');cameraOrtho.lookAt(0,0,0);resize()});
-  $('camera-persp').addEventListener('click',()=>{follow=false;camera=cameraPersp;syncCameraUI('persp')});
-  $('camera-follow').addEventListener('click',()=>{follow=!follow;camera=cameraPersp;syncCameraUI('follow')});
-  $('view-reset').addEventListener('click',()=>{follow=false;camera=cameraPersp;view.resetView?.();syncCameraUI('persp')});
+  $('view-reset').addEventListener('click',()=>{view.resetView?.()});
   for(const [id,name] of [['speed','speed'],['force','force'],['gravity','gravity']])$(id).addEventListener('input',e=>{sim.settings[name]=Number(e.target.value);$(name+'-out').textContent=Number(e.target.value).toFixed(1)+'×'});
   $('ai').addEventListener('change',e=>sim.settings.ai=e.target.checked);
   $('practice').addEventListener('change',e=>{sim.settings.practice=e.target.checked;resetRound();syncUI()});
+  $('hud-toggle').addEventListener('click',()=>{
+    const next=!hudMinimized;
+    hudManuallyExpanded = sim.status==='playing' && !next; // expanding during play is manual override
+    setHudMinimized(next);
+  });
   $('update-history-btn').addEventListener('click',()=>openUpdateHistory());
   $('update-history-close').addEventListener('click',()=>$('update-history-dialog').close());
   $('settings-toggle').addEventListener('click',()=>{$('settings').hidden=!$('settings').hidden});

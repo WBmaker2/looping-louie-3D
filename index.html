@@ -23,16 +23,17 @@
       </div>
       <button id="sound" class="icon-button" aria-pressed="true">🔊</button>
       <button id="settings-toggle" class="icon-button" aria-expanded="false">⚙️</button>
+      <button id="hud-toggle" class="icon-button" aria-expanded="true" aria-controls="game-menu" title="메뉴 접기/펼치기">−</button>
     </div>
   </header>
 
-  <div class="scoreboard" id="scoreboard"></div>
+  <div id="game-menu">
+    <div class="mini-scores" id="mini-scores" hidden></div>
+    <div class="scoreboard" id="scoreboard"></div>
 
   <div class="hud-utilities">
     <div class="projection-switch" role="group" aria-label="카메라">
-      <button id="camera-ortho" aria-pressed="false">직교</button>
       <button id="camera-persp" aria-pressed="true">원근</button>
-      <button id="camera-follow" aria-pressed="false">추적</button>
     </div>
     <div class="game-time">⏱ <output id="elapsed-time">00:00</output></div>
   </div>
@@ -66,6 +67,7 @@
   </div>
   <div id="toast" class="toast" role="status"></div>
   <div id="error" class="error" hidden role="alert"></div>
+  </div>
 </section>
 
 <div id="countdown" class="countdown" hidden><span id="countdown-number">3</span></div>
