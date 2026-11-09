@@ -5,7 +5,7 @@ import { FrameClock } from './frame-clock.js';
 import { GameAudio } from './game-audio.js';
 import { createRoundState } from './round-state.js';
 import { playerBindings, playerName, elapsedTime } from './player-mode.js';
-import { UPDATE_HISTORY } from './update-history.js';
+import { UPDATE_HISTORY } from './update-history.js?v=20261109-1';
 
 const $=id=>document.getElementById(id);
 const COLORS=['#ef4444','#3b82f6','#22c55e','#f59e0b'];

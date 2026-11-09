@@ -1,9 +1,15 @@
 // docs/UPDATELOG.md 를 기반으로, 날짜별 업데이트를 순서대로 보여주기 위한 데이터
 export const UPDATE_HISTORY = [
   {
+    date: '2026-11-09',
+    items: [
+      '업데이트 내역 문구 정리·수정 + 캐시 버스팅',
+    ],
+  },
+  {
     date: '2026-11-08',
     items: [
-      '사이트 분석 완료: Three.js WebGL 루핑루이, 물리 120Hz, arm 4.4, 4인 패들·각 3마리, 1/2/3인 조작(Space/Shift), AI 봇, 카운트다운·카메라·테마·설정 재현',
+      '게임 기획·구현: Three.js WebGL 루핑루이, 물리 120Hz, arm 4.4, 4인 패들·각 3마리, 1/2/3인 조작(Space/Shift), AI 봇, 카운트다운·카메라·테마·설정',
       'Blender MCP로 귀여운 에셋 가져오기: 닭, 농부, 농장, 트리, 우주선(비행기 대역) — 5종 import 성공',
       'Blender에 원형 보드·피벗·팔·패들 4개·닭 12마리 프로토타입 씬 구성',
       '웹 게임 구현: index.html, style.css, src/physics.js, main.js (Three.js 씬·카메라 3종·1/2/3인 플레이·AI·연습모드) 신규 제작',

@@ -1,6 +1,6 @@
 # Looping Louie 3D
 
-원본(jvibeschool.org/3D/Looping) 스타일의 3D 웹 게임. Blender MCP로 제작.
+Three.js WebGL 기반 3D 웹 게임. Blender MCP로 제작.
 
 ## 실행
 ```
